@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars (DO NOT COMMIT terraform.tfvars)
+# cp terraform.tfvars.example terraform.tfvars
+
+region          = "us-east-1"
+cluster_name    = "eks-openclaw-lab"
+cluster_version = "1.30"
+
+# Optional: If empty, current Terraform caller becomes EKS admin
+admin_principal_arn = ""
+# admin_principal_arn = "arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>"

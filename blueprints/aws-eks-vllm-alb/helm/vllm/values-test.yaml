@@ -1,0 +1,124 @@
+
+replicaCount: 1
+
+image:
+  repository: vllm/vllm-openai
+  tag: "latest"   # Recommended: pin a specific tag in production
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Scheduling for GPU nodes
+nodeSelector:
+  accelerator: gpu
+tolerations: []
+affinity: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# vLLM OpenAI server settings
+vllm:
+  # HuggingFace / model id or local path inside the container
+  # model: "mistralai/Mistral-7B-Instruct-v0.2"
+  model: "meta-llama/Llama-3.1-8B-Instruct"
+  port: 8000
+
+  # Common knobs (add more in extraArgs)
+  dtype: "float16"
+  maxModelLen: 16384
+  tensorParallelSize: 1
+
+  # Enable/disable request logging etc.
+  # logRequests: false
+
+  # Extra args appended to the vLLM OpenAI server entrypoint
+  extraArgs:
+    - --enable-auto-tool-choice
+    - --tool-call-parser
+    - llama3_json
+    - --served-model-name
+    - meta-llama/llama-3.1-8b-instruct
+    - --gpu-memory-utilization
+    - "0.90"
+    - --attention-backend
+    - FLASH_ATTN
+  # Example:
+  # extraArgs:
+  #   - "--gpu-memory-utilization"
+  #   - "0.90"
+  #   - "--enforce-eager"
+
+env:
+  # Extra environment variables
+  extra: []
+  # Example:
+  # extra:
+  #   - name: VLLM_LOGGING_LEVEL
+  #     value: INFO
+
+resources:
+  limits:
+    nvidia.com/gpu: 1
+  requests:
+    cpu: "1"
+    memory: "4Gi"
+
+# Optional: cache models to a PVC so pods restart faster and avoid re-downloading
+persistence:
+  enabled: false
+  existingClaim: ""
+  storageClassName: ""
+  accessModes: ["ReadWriteOnce"]
+  size: 100Gi
+  mountPath: /root/.cache/huggingface
+
+# If you need to access gated models, set an HF token via a Secret
+huggingface:
+  tokenSecretName: "hf-token"   # e.g. "hf-token"
+  tokenSecretKey: "token"
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  # Note: GPU autoscaling usually needs custom metrics; CPU HPA is provided as a baseline.
+
+livenessProbe:
+  enabled: true
+  path: /v1/models
+  initialDelaySeconds: 600
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 12
+
+readinessProbe:
+  enabled: true
+  path: /v1/models
+  initialDelaySeconds: 120
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 12

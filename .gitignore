@@ -1,0 +1,13 @@
+# terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# kube
+kubeconfig
+
+# mac
+.DS_Store
+
+# env
+.env

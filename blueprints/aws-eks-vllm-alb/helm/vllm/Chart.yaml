@@ -1,0 +1,7 @@
+
+apiVersion: v2
+name: openclow-vllm-openai
+description: Deploy an OpenAI-compatible vLLM backend on Kubernetes (EKS-friendly, ALB ingress ready)
+type: application
+version: 0.1.0
+appVersion: "0.0.0"
