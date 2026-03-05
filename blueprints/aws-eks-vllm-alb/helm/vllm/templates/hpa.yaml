@@ -3,14 +3,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "openclow-vllm-openai.fullname" . }}
+  name: {{ include "openclaw-vllm-openai.fullname" . }}
   labels:
-    {{- include "openclow-vllm-openai.labels" . | nindent 4 }}
+    {{- include "openclaw-vllm-openai.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "openclow-vllm-openai.fullname" . }}
+    name: {{ include "openclaw-vllm-openai.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

@@ -1,5 +1,5 @@
 
-# openclow-vllm-openai (Helm Chart)
+# openclaw-vllm-openai (Helm Chart)
 
 Deploy an **OpenAI-compatible vLLM backend** on Kubernetes. Works well on EKS GPU nodegroups and supports ALB Ingress.
 
@@ -10,8 +10,8 @@ Deploy an **OpenAI-compatible vLLM backend** on Kubernetes. Works well on EKS GP
 
 ## Install
 ```bash
-helm upgrade --install vllm openclow-vllm-openai/ \
-  -n openclow --create-namespace
+helm upgrade --install vllm openclaw-vllm-openai/ \
+  -n openclaw --create-namespace
 ```
 
 ## Minimal production-ish values (example)
@@ -56,7 +56,7 @@ ingress:
 
 Install with:
 ```bash
-helm upgrade --install vllm . -n openclow -f prod-values.yaml
+helm upgrade --install vllm . -n openclaw -f prod-values.yaml
 ```
 
 ## Persistence (optional)
@@ -69,7 +69,7 @@ persistence:
 
 ## HF token (optional)
 ```bash
-kubectl create secret generic hf-token --from-literal=token=<YOUR_HF_TOKEN> -n openclow
+kubectl create secret generic hf-token --from-literal=token=<YOUR_HF_TOKEN> -n openclaw
 ```
 ```yaml
 huggingface:

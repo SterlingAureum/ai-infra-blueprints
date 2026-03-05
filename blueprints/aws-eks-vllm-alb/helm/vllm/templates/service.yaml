@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "openclow-vllm-openai.fullname" . }}
+  name: {{ include "openclaw-vllm-openai.fullname" . }}
   labels:
-    {{- include "openclow-vllm-openai.labels" . | nindent 4 }}
+    {{- include "openclaw-vllm-openai.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    {{- include "openclow-vllm-openai.selectorLabels" . | nindent 4 }}
+    {{- include "openclaw-vllm-openai.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}

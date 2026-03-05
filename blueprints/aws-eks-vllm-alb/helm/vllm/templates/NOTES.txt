@@ -1,6 +1,6 @@
 
 1. vLLM OpenAI-compatible endpoint:
-   - Inside cluster: http://{{ include "openclow-vllm-openai.fullname" . }}:{{ .Values.service.port }}/v1
+   - Inside cluster: http://{{ include "openclaw-vllm-openai.fullname" . }}:{{ .Values.service.port }}/v1
    - If ingress enabled: check your Ingress address (kubectl get ingress)
 
 2. Quick tests:

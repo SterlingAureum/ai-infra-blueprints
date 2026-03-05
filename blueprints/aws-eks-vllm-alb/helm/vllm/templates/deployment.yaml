@@ -2,18 +2,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "openclow-vllm-openai.fullname" . }}
+  name: {{ include "openclaw-vllm-openai.fullname" . }}
   labels:
-    {{- include "openclow-vllm-openai.labels" . | nindent 4 }}
+    {{- include "openclaw-vllm-openai.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "openclow-vllm-openai.selectorLabels" . | nindent 6 }}
+      {{- include "openclaw-vllm-openai.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "openclow-vllm-openai.selectorLabels" . | nindent 8 }}
+        {{- include "openclaw-vllm-openai.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -22,7 +22,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ include "openclow-vllm-openai.serviceAccountName" . }}
+      serviceAccountName: {{ include "openclaw-vllm-openai.serviceAccountName" . }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -104,5 +104,5 @@ spec:
         {{- if .Values.persistence.enabled }}
         - name: model-cache
           persistentVolumeClaim:
-            claimName: {{ default (printf "%s-cache" (include "openclow-vllm-openai.fullname" .)) .Values.persistence.existingClaim }}
+            claimName: {{ default (printf "%s-cache" (include "openclaw-vllm-openai.fullname" .)) .Values.persistence.existingClaim }}
         {{- end }}
