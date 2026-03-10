@@ -13,7 +13,7 @@ variable "cluster_version" {
   default = "1.33"
 }
 
-# 让你当前统一身份（sterling-admin role）直接成为 k8s 管理员
+# Make your current unified identity (sterling-admin role) directly a Kubernetes administrator
 variable "admin_principal_arn" {
   description = "Optional: IAM principal (role/user ARN) to grant EKS cluster admin access. If empty, the current Terraform caller identity is used."
   type        = string
@@ -28,7 +28,7 @@ variable "admin_principal_arn" {
   }
 }
 
-# GPU 节点默认 0：不用就不花钱
+# GPU nodes default to 0: no cost if not used
 variable "gpu_desired" {
   type    = number
   default = 0
@@ -56,7 +56,7 @@ variable "enable_addons" {
 
 variable "cluster_public_access_cidrs" {
   type    = list(string)
-  default = ["0.0.0.0/0"] # demo 可先这样，后续改成 ["你的公网IP/32"]
+  default = ["0.0.0.0/0"] # You can do this for the demo first, then change to ["your-public-ip/32"] later
 }
 
 variable "lab_public_nodes" {

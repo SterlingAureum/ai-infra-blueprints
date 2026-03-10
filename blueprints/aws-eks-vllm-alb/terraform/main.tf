@@ -12,7 +12,7 @@ locals {
     Owner   = "sterling"
   }
 
-  # us-east-1 常见可用 AZ（足够做 demo）
+  # us-east-1 common availability zones (sufficient for demo)
   azs = ["us-east-1a", "us-east-1b"]
 
   # admin_principal_arn = var.admin_principal_arn != "" ? var.admin_principal_arn : data.aws_caller_identity.current.arn
@@ -38,7 +38,7 @@ module "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  # ALB Controller 依赖这些子网 tags（Blueprints 装好 controller 后就能直接用 Ingress）
+  # ALB Controller depends on these subnet tags (Ingress can be used directly after installing the controller via Blueprints)
   public_subnet_tags = {
     "kubernetes.io/role/elb"              = "1"
     "kubernetes.io/cluster/${local.name}" = "shared"
@@ -58,7 +58,7 @@ locals {
 
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
-  # 这里用 registry 最新大版本范围；你也可以锁死某个版本
+  # Use the latest major version range of the registry here; you can also lock it to a specific version
   version = "~> 20.0"
 
   tags = local.tags
@@ -69,7 +69,7 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = local.node_subnet_ids
 
-  # 本机 kubectl 要稳定访问：开 public endpoint
+  # To ensure stable access from the local kubectl: enable the public endpoint
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = true
 
@@ -79,7 +79,7 @@ module "eks" {
 
   enable_irsa = true
 
-  # 直接用 Access Entry（避免你之前手工 create-access-entry 的坑）
+  # Use Access Entry directly (to avoid the pitfalls of your previous manual creation of access-entry)
   access_entries = {
     admin = {
       principal_arn = local.effective_admin_principal_arn
@@ -112,14 +112,14 @@ module "eks" {
       max_size     = var.gpu_max
       desired_size = var.gpu_desired
 
-      # 强烈建议：GPU 节点打标签 + 可选 taint（防止非 GPU workload 跑上来）
+      # Highly recommended: label GPU nodes + optional taint (to prevent non-GPU workloads from running on them)
       labels = {
         "accelerator" = "gpu"
         "workload"    = "inference"
         "nvidia.com/gpu.present" = "true"
       }
 
-      # 如果你希望“只有显式容忍的 Pod 才能上 GPU 节点”，开启 taints
+      # Enable taints if you want "only pods with explicit tolerations to run on GPU nodes"
       # taints = {
       #   gpu = {
       #     key    = "nvidia.com/gpu"
@@ -128,36 +128,36 @@ module "eks" {
       #   }
       # }
 
-      # 关键：使用 Launch Template 来控制 root volume / 安全配置
+      # Key: Use Launch Template to control root volume and security settings.
       create_launch_template = true
 
-      # Root disk（镜像解压 + 容器层 + 日志 + 少量缓存）
+      # Root disk (image extraction + container layer + logs + small amount of cache)
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
             volume_size           = var.gpu_disk_gib
             volume_type           = "gp3"
-            iops                  = 3000 # gp3 baseline; 可按需调
-            throughput            = 125  # gp3 baseline; 可按需调
+            iops                  = 3000 # gp3 baseline;
+            throughput            = 125  # gp3 baseline;
             encrypted             = true
             delete_on_termination = true
           }
         }
       }
 
-      # IMDSv2 强制（生产安全默认）
+      # IMDSv2 enforced (production security default)
       metadata_options = {
         http_endpoint               = "enabled"
         http_tokens                 = "required"
         http_put_response_hop_limit = 2
       }
 
-      # 可选：SSH 调试（生产一般关掉）
+      # Optional: SSH debugging (usually disabled in production)
       key_name = var.ssh_key_name
 
-      # kubelet 级别的默认：给 OS/容器预留资源，降低被驱逐概率
-      # （EKS AMI 的 bootstrap 会吃这些参数）
+      # Default at the kubelet level: reserve resources for the OS/containers to reduce the probability of eviction
+      # (The bootstrap process of EKS AMI consumes these parameters)
       bootstrap_extra_args = "--kubelet-extra-args '--node-labels=accelerator=gpu,workload=inference --system-reserved=cpu=200m,memory=1Gi,ephemeral-storage=10Gi --kube-reserved=cpu=200m,memory=1Gi,ephemeral-storage=10Gi --eviction-hard=memory.available<500Mi,nodefs.available<10%,imagefs.available<10%'"
     }
 
@@ -200,7 +200,7 @@ module "eks" {
   }
 }
 
-# 让 helm/k8s provider 直接连到新集群（用于 addons module）
+# Make the helm/k8s provider connect directly to the new cluster (for the addons module)
 data "aws_eks_cluster" "this" {
   name       = module.eks.cluster_name
   depends_on = [null_resource.wait_for_eks_api]
@@ -252,13 +252,13 @@ aws eks describe-cluster --name ${module.eks.cluster_name} --region ${var.region
 EOT
   }
 
-  # 可选：如果你经常 destroy/recreate，避免一些 provisioner 复用问题
+  # Optional: If you frequently destroy/recreate clusters, avoid reuse issues with certain provisioners
   triggers = {
     cluster_id = module.eks.cluster_id
   }
 }
 
-# Blueprints Addons：一键装 ALB Controller（含 IRSA/IAM 权限）
+# Blueprints Addons: One-click installation of ALB Controller (including IRSA/IAM permissions)
 module "eks_blueprints_addons" {
   count   = var.enable_addons ? 1 : 0
   source  = "aws-ia/eks-blueprints-addons/aws"
