@@ -20,9 +20,14 @@ tolerations: []
 affinity: {}
 
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 80
   targetPort: 8000
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
 
 # vLLM OpenAI server settings
 vllm:
@@ -77,17 +82,16 @@ huggingface:
 
 ingress:
   enabled: false
-  className: "alb"
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-  hosts:
-    - host: ""
-      paths:
-        - path: /
-          pathType: Prefix
+  annotations: {}
+    #  kubernetes.io/ingress.class: alb
+    #  alb.ingress.kubernetes.io/scheme: internet-facing
+    #  alb.ingress.kubernetes.io/target-type: ip
+    #  alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+  hosts: []
+    # - host: ""
+    #   paths:
+    #     - path: /
+    #       pathType: Prefix
   tls: []
 
 autoscaling:

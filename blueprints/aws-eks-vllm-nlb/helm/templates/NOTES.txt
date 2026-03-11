@@ -1,0 +1,17 @@
+
+1. vLLM OpenAI-compatible endpoint:
+   - Inside cluster: http://{{ include "openclaw-vllm-openai.fullname" . }}:{{ .Values.service.port }}/v1
+   - If ingress enabled: check your Ingress address (kubectl get ingress)
+
+2. Quick tests:
+   - List models:
+     curl http://<endpoint>/v1/models
+   - Chat completions:
+     curl http://<endpoint>/v1/chat/completions \
+       -H "Content-Type: application/json" \
+       -d '{"model":"{{ .Values.vllm.model }}","messages":[{"role":"user","content":"hello"}]}'
+
+3. If using gated HF models, create a secret:
+   kubectl create secret generic hf-token --from-literal=token=<YOUR_HF_TOKEN>
+   Then set:
+     huggingface.tokenSecretName: hf-token

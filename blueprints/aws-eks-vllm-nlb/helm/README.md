@@ -1,12 +1,12 @@
 
 # openclaw-vllm-openai (Helm Chart)
 
-Deploy an **OpenAI-compatible vLLM backend** on Kubernetes. Works well on EKS GPU nodegroups and supports ALB Ingress.
+Deploy an **OpenAI-compatible vLLM backend** on Kubernetes. Works well on EKS GPU nodegroups and supports NLB Ingress.
 
 ## Prereqs
 - Kubernetes cluster with GPU nodes
 - NVIDIA device plugin installed (EKS GPU AMI + addon/operator)
-- For ALB ingress: AWS Load Balancer Controller installed
+- For NLB ingress: AWS Load Balancer Controller installed
 
 ## Minimal production-ish values (example)
 Create `prod-values.yaml`:
@@ -26,26 +26,37 @@ resources:
     memory: "8Gi"
 
 vllm:
-  model: "meta-llama/Llama-3-8b-instruct"
+  model: "meta-llama/Llama-3.1-8B-Instruct"
   dtype: "float16"
-  maxModelLen: 4096
+  maxModelLen: 16384
   tensorParallelSize: 1
   extraArgs:
-    - "--gpu-memory-utilization"
+    - --enable-auto-tool-choice
+    - --tool-call-parser
+    - llama3_json
+    - --served-model-name
+    - meta-llama/llama-3.1-8b-instruct
+    - --gpu-memory-utilization
     - "0.90"
+    - --attention-backend
+    - FLASH_ATTN
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
 
 ingress:
-  enabled: true
-  className: "alb"
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-  hosts:
-    - host: ""
-      paths:
-        - path: /
-          pathType: Prefix
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
 ```
 
 Install with:
