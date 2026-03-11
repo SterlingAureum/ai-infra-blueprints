@@ -1,167 +1,274 @@
-
 # AI Infra Blueprints
 
-This repository contains infrastructure blueprints for running GPU‑based AI inference workloads.
-The goal is to provide a **clear, reproducible reference setup** for deploying an OpenAI‑compatible
-inference backend using Kubernetes.
+Reference infrastructure blueprints for running GPU-based AI inference backends on Kubernetes.
 
-The current blueprint focuses on:
+This repository focuses on **infrastructure delivery**, not on agent runtime logic. Its purpose is to provide reproducible deployment patterns for exposing **OpenAI-compatible inference APIs** that can be consumed by upstream systems such as OpenClaw, internal gateways, or other AI application layers.
+
+At the current stage, the repository contains AWS EKS-based blueprints for deploying **vLLM on GPU nodes** with different public exposure patterns.
+
+---
+
+## Scope
+
+This repository is designed around a clear boundary:
+
+- **Included**
+  - Kubernetes-based AI inference infrastructure
+  - AWS EKS cluster patterns
+  - GPU node scheduling and runtime prerequisites
+  - Helm-based vLLM deployment
+  - OpenAI-compatible API exposure
+  - Ingress / Load Balancer access patterns
+
+- **Not included**
+  - Agent framework business logic
+  - Application UI
+  - Prompt orchestration
+  - Multi-model routing logic at the product layer
+  - Full production platform hardening
+
+In other words, this repo is the **inference backend infrastructure layer**, not the complete AI product stack.
+
+---
+
+## Current Blueprints
+
+### 1. `blueprints/aws-eks-vllm-alb`
+AWS EKS blueprint for exposing vLLM through **AWS Application Load Balancer (ALB)**.
+
+This variant is suitable when you want:
+
+- Layer 7 HTTP/HTTPS ingress
+- Kubernetes Ingress-based routing
+- ALB-native integration patterns
+- A more typical web-style entrypoint
+
+### 2. `blueprints/aws-eks-vllm-nlb`
+AWS EKS blueprint for exposing vLLM through **AWS Network Load Balancer (NLB)**.
+
+This variant is suitable when you want:
+
+- A simpler Layer 4 exposure model
+- Direct service exposure through a `LoadBalancer` service
+- Fewer ingress-layer moving parts
+- A practical alternative to ALB for inference access
+
+---
+
+## Repository Structure
+
+```text
+ai-infra-blueprints/
+├─ blueprints/
+│  ├─ aws-eks-vllm-alb/
+│  │  ├─ terraform/
+│  │  └─ helm/
+│  └─ aws-eks-vllm-nlb/
+│     ├─ terraform/
+│     └─ helm/
+├─ docs/
+└─ README.md
+```
+
+Each blueprint is intended to keep a similar high-level shape:
+
+- terraform/ for infrastructure provisioning
+
+- helm/ for workload deployment
+
+- local blueprint-specific notes where needed
+
+This layout is meant to make future blueprints easy to add without restructuring the repository.
+
+## What These Blueprints Deploy
+
+The current blueprints are centered around the same core target:
 
 - AWS EKS cluster
-- GPU nodes
+
+- GPU-capable worker nodes
+
 - vLLM inference server
-- ALB ingress exposure
-- OpenAI‑compatible API endpoint
 
-This repository intentionally keeps the scope limited to **infrastructure and deployment mechanics**.
-Application frameworks such as OpenClaw or other agent runtimes are expected to connect to the
-resulting OpenAI‑compatible endpoint.
+- OpenAI-compatible API endpoints
 
----
+- Public access through ALB or NLB depending on blueprint
 
-# Repository Structure
+Typical endpoints exposed by the deployed inference backend include:
 
-```
-ai-infra-blueprints
-│
-├─ docs/
-│
-└─ blueprints/
-   └─ aws-eks-vllm-alb/
-      ├─ terraform/
-      └─ helm/
-         └─ vllm/
-```
-
-Each blueprint contains:
-
-- Terraform infrastructure definitions
-- Helm charts for workload deployment
-- Minimal operational documentation
-
----
-
-# Blueprint: AWS EKS + vLLM + ALB
-
-This blueprint deploys a GPU inference backend using:
-
-- AWS EKS
-- GPU node groups
-- vLLM inference server
-- AWS ALB ingress
-- OpenAI‑compatible API
-
-The deployed service exposes endpoints such as:
-
-```
+```bash
 GET  /v1/models
+POST /v1/completions
 POST /v1/chat/completions
 ```
 
-These endpoints can be consumed by systems expecting the OpenAI API format.
+This makes the deployed service usable by tools and gateways that expect an OpenAI-style API contract.
 
 ---
 
-# Deployment Overview
+## Typical Workflow
 
-Typical workflow:
+The usual workflow for a blueprint in this repository is:
 
-1. Provision EKS infrastructure using Terraform
-2. Ensure GPU nodes are available
-3. Install required Kubernetes GPU plugins
-4. Deploy vLLM using Helm
-5. Verify the inference endpoint
+1. Provision the AWS infrastructure with Terraform
 
----
+2. Ensure GPU nodes are available in the cluster
 
-# GPU Plugin Setup
+3. Install required Kubernetes GPU-related components
 
-GPU nodes require Kubernetes plugins in order for the scheduler to detect and allocate GPU
-resources correctly.
+4. Deploy vLLM with Helm
 
-Install Node Feature Discovery:
+5. Expose the service through the selected access pattern
 
-```
+6. Verify the OpenAI-compatible API endpoint
+
+## GPU Runtime Prerequisites
+
+GPU workloads on Kubernetes require the cluster to recognize and advertise GPU resources correctly.
+
+Typical supporting components include:
+
+- Node Feature Discovery (NFD)
+
+- NVIDIA Device Plugin
+
+Example installation flow:
+
+```bash
 helm repo add nfd https://kubernetes-sigs.github.io/node-feature-discovery/charts
 helm repo update
 helm upgrade --install node-feature-discovery nfd/node-feature-discovery -n kube-system
-```
 
-Install the NVIDIA device plugin:
-
-```
 helm repo add nvidia https://nvidia.github.io/k8s-device-plugin
 helm repo update
-
 helm upgrade --install nvidia-device-plugin nvidia/nvidia-device-plugin -n kube-system
 ```
 
-These components enable Kubernetes to recognize GPU hardware and expose it as schedulable
-resources.
+After installation, GPU allocatable resources can be checked with:
 
----
-
-# Verifying GPU Availability
-
-After installing the plugins and starting GPU nodes, verify that Kubernetes detects the GPU
-resources:
-
-```
+```bash
 kubectl get nodes -o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu
 ```
 
-Example output:
+If GPU values appear in the allocatable column, Kubernetes is detecting schedulable GPU resources correctly.
 
+## Model Access and Secrets
+
+vLLM may need to pull model artifacts from Hugging Face during startup.
+
+A common pattern is to create a Kubernetes secret separately and reference it from the workload:
+
+```bash
+kubectl -n <namespace> create secret generic hf-token \
+  --from-literal=token='<your_hf_token>'
 ```
-NAME            GPU
-ip-10-0-1-23    1
-```
 
-If GPU values appear in the `allocatable` column, the device plugin is functioning correctly.
+This repository intentionally keeps credentials outside the committed chart values so that:
 
-GPU node labels in this blueprint are automatically applied through the node group configuration.
-Manual labeling is not required.
+- secrets are not stored in Git
+
+- token rotation remains independent
+
+- the chart stays reusable across environments
+
+## Choosing ALB vs NLB
+
+Both patterns are valid, but they serve slightly different operational preferences.
+
+### Choose ALB when:
+
+- you want an Ingress-oriented design
+
+- you prefer Layer 7 routing semantics
+
+- you expect more HTTP-oriented ingress features over time
+
+### Choose NLB when:
+
+- you want a simpler exposure path
+
+- you prefer a more direct service-to-load-balancer model
+
+- you want fewer ingress abstractions in the first iteration
+
+At the current stage of this repository, these should be treated as parallel blueprint options, not as strict replacements for one another.
 
 ---
 
-# HuggingFace Token Secret
+## Design Principles
 
-vLLM may download models from HuggingFace during startup.  
-A Kubernetes secret can be created to provide the token securely.
+This repository follows a few practical principles:
 
-Example:
+- Keep infrastructure concerns separate from application logic
 
-```
-kubectl -n ${namespace} create secret generic hf-token   --from-literal=token='hf_token'
-```
+- Prefer reproducible, minimal building blocks first
 
-This secret is referenced by the vLLM deployment to allow automatic model download.
+- Avoid unnecessary platform complexity in early versions
 
-Currently the secret is created separately rather than embedded directly inside the Helm chart.
-This keeps credentials out of chart configuration and allows independent secret rotation.
+- Document working reference patterns before expanding scope
+
+- Allow multiple access patterns (ALB / NLB) to coexist
 
 ---
 
-# Notes
+## Planned Expansion
 
-- Terraform state files are intentionally excluded from version control.
-- This repository focuses on infrastructure only.
-- Observability, multi‑region deployment, and production hardening may be added in future
-  iterations.
+This repository is intentionally being built incrementally.
+
+Possible future additions may include:
+
+- additional cloud blueprints
+
+- private/internal exposure patterns
+
+- observability add-ons
+
+- autoscaling refinements
+
+- production hardening guidance
+
+- versioned deployment notes
+
+- multi-environment structure
+
+- reusable shared Helm/Terraform modules
+
+The goal is not to make the repository artificially broad too early, but to let it expand from working, testable infrastructure patterns.
 
 ---
 
-# Related Projects
+## Relationship to OpenClaw
 
-This blueprint is often used together with:
+This repository is infrastructure-focused and pairs naturally with an upstream gateway or agent runtime.
 
-**openclaw-deployment-lab**
+For example, it can be used alongside:
 
-That repository focuses on deploying and configuring the OpenClaw gateway while this repository
-provides a compatible inference backend.
+- openclaw-deployment-lab
+
+In that split:
+
+- this repository provides the OpenAI-compatible inference backend
+
+- OpenClaw-related repositories handle gateway / orchestration / runtime integration
+
+That separation keeps the infrastructure blueprint reusable even outside of OpenClaw.
 
 ---
 
-# License
+## Current Status
+
+This repository should currently be viewed as a **working blueprint collection**, not a finished production platform.
+
+The current emphasis is:
+
+- validating deployment patterns
+
+- keeping the structure clean
+
+- documenting practical infrastructure decisions
+
+- leaving room for future expansion without large rewrites
+
+## License
 
 MIT
