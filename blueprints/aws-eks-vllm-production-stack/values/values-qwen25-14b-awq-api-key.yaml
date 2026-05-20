@@ -1,0 +1,51 @@
+hostPath: "/var/lib/vllm"
+
+servingEngineSpec:
+  runtimeClassName: ""
+
+  vllmApiKey:
+    secretName: "vllm-api-key"
+    secretKey: "api-key"
+
+  modelSpec:
+    - name: "qwen25-14b-awq"
+      repository: "vllm/vllm-openai"
+      tag: "latest"
+      modelURL: "Qwen/Qwen2.5-14B-Instruct-AWQ"
+
+      replicaCount: 1
+
+      requestCPU: 4
+      requestMemory: "24Gi"
+      requestGPU: 1
+
+      env:
+        - name: VLLM_LOGGING_LEVEL
+          value: "DEBUG"
+
+      vllmConfig:
+        enableChunkedPrefill: true
+        maxNumSeqs: 4
+        gpuMemoryUtilization: 0.90
+        maxModelLen: 32768
+        dtype: "half"
+        extraArgs:
+          - "--served-model-name=qwen25-14b-awq"
+          - "--tool-call-parser=hermes"
+          - "--enable-auto-tool-choice"
+          - "--enable-log-requests"
+
+routerSpec:
+  enableRouter: true
+  serviceType: LoadBalancer
+  servicePort: 80
+
+  vllmApiKey:
+    secretName: "vllm-api-key"
+    secretKey: "api-key"
+
+  serviceAnnotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
