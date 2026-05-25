@@ -13,40 +13,6 @@ For blueprint-level architecture and deployment flow, see:
 
 ---
 
-## What This Chart Does
-
-This chart is intended to deploy:
-
-- a vLLM inference workload
-- a Kubernetes Service for internal access
-- optional ALB-facing Ingress resources
-- optional persistence for model cache
-- optional Hugging Face token integration through a Kubernetes secret
-
-Typical API paths exposed by vLLM include:
-
-```text
-/v1/models
-/v1/completions
-/v1/chat/completions
-```
-
----
-
-## Prerequisites
-
-Before installing this chart, make sure you already have:
-
-- a Kubernetes cluster
-- GPU-capable worker nodes
-- NVIDIA device plugin installed
-- a namespace prepared for the release
-- model access credentials if your model requires Hugging Face authentication
-
-For the ALB-based exposure pattern used in this blueprint, the cluster should also have the AWS Load Balancer Controller installed and working.
-
----
-
 ## Chart Layout
 
 ```text
@@ -57,21 +23,6 @@ vllm/
 ├─ prod-values.yaml
 └─ README.md
 ```
-
----
-
-## Key Configuration Areas
-
-The chart configuration is mainly organized around these concerns:
-
-- `image`: container image repository and tag
-- `resources`: CPU, memory, and GPU requests/limits
-- `nodeSelector`: scheduling onto GPU nodes
-- `vllm`: model and runtime arguments
-- `service`: internal Kubernetes service settings
-- `ingress`: ALB-facing ingress settings
-- `persistence`: optional PVC for model cache
-- `huggingface`: optional secret reference for token-based model access
 
 ---
 
@@ -206,30 +157,9 @@ The exact external URL depends on the ALB Ingress resource created from your val
 
 ---
 
-## What This README Covers
-
-Use this chart README for:
-
-- chart installation
-- values configuration
-- ingress settings for ALB exposure
-- runtime tuning parameters
-- persistence and secret integration
-
-Use the blueprint README for:
-
-- overall architecture
-- Terraform and Helm relationship
-- deployment flow across the full blueprint
-- why this blueprint uses ALB instead of NLB
-
----
-
 ## Notes
 
 - This README is intentionally chart-focused and does not repeat the full blueprint-level deployment flow.
-- ALB exposure in this blueprint is implemented through Kubernetes Ingress rather than direct `LoadBalancer` Service exposure.
-- Keep model-specific tuning in values files rather than hardcoding it into templates.
 
 ---
 

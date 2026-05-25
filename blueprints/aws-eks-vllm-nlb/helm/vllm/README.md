@@ -13,40 +13,6 @@ For blueprint-level architecture and deployment flow, see:
 
 ---
 
-## What This Chart Does
-
-This chart is intended to deploy:
-
-- a vLLM inference workload
-- a Kubernetes Service for internal or external access
-- direct NLB exposure through `Service` annotations
-- optional persistence for model cache
-- optional Hugging Face token integration through a Kubernetes secret
-
-Typical API paths exposed by vLLM include:
-
-```text
-/v1/models
-/v1/completions
-/v1/chat/completions
-```
-
----
-
-## Prerequisites
-
-Before installing this chart, make sure you already have:
-
-- a Kubernetes cluster
-- GPU-capable worker nodes
-- NVIDIA device plugin installed
-- a namespace prepared for the release
-- model access credentials if your model requires Hugging Face authentication
-
-For the NLB-based exposure pattern used in this blueprint, the chart expects the service to be exposed through AWS load balancer annotations on a `LoadBalancer` service.
-
----
-
 ## Chart Layout
 
 ```text
@@ -57,21 +23,6 @@ vllm/
 ├─ prod-values.yaml
 └─ README.md
 ```
-
----
-
-## Key Configuration Areas
-
-The chart configuration is mainly organized around these concerns:
-
-- `image`: container image repository and tag
-- `resources`: CPU, memory, and GPU requests/limits
-- `nodeSelector`: scheduling onto GPU nodes
-- `vllm`: model and runtime arguments
-- `service`: NLB-facing service type and annotations
-- `ingress`: usually disabled in this blueprint
-- `persistence`: optional PVC for model cache
-- `huggingface`: optional secret reference for token-based model access
 
 ---
 
@@ -215,8 +166,6 @@ The exact external address depends on the NLB resource created from the Service 
 ## Notes
 
 - This README is intentionally chart-focused and does not repeat the full blueprint-level deployment flow.
-- NLB setup details belong partly to the service annotations here and partly to the blueprint and infrastructure layer.
-- Keep model-specific tuning in values files rather than hardcoding it into templates.
 
 ---
 

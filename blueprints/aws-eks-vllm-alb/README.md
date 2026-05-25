@@ -8,19 +8,6 @@ This document explains the **solution-level design** of the ALB variant. For cha
 
 ---
 
-## Blueprint Goal
-
-This blueprint provides a reference pattern for:
-
-- provisioning an EKS-based GPU inference environment
-- deploying vLLM on Kubernetes
-- exposing the service through Kubernetes Ingress
-- publishing the endpoint through AWS ALB
-
-At a high level, this is the more ingress-oriented option in this repository.
-
----
-
 ## When to Use This Blueprint
 
 Choose this blueprint when you want:
@@ -75,34 +62,6 @@ Client
 ```
 
 This blueprint keeps the public access path aligned with a standard Kubernetes ingress pattern.
-
----
-
-## Deployment Sequence
-
-A typical workflow looks like this:
-
-1. Provision the EKS infrastructure with Terraform
-2. Confirm cluster access with `kubectl`
-3. Ensure GPU nodes are available
-4. Install GPU-related Kubernetes components if needed
-5. Ensure ALB-related controller prerequisites are in place
-6. Deploy vLLM with the Helm chart
-7. Wait for ALB provisioning and DNS assignment
-8. Verify the OpenAI-compatible endpoint externally
-
----
-
-## Common Prerequisites
-
-Before using this blueprint, you should generally already have:
-
-- an AWS account with sufficient permissions
-- EKS-related IAM permissions
-- quota for the GPU instance type you plan to use
-- a valid container image strategy for vLLM
-- model access credentials if the model must be pulled from Hugging Face
-- `kubectl`, `helm`, `terraform`, and AWS CLI installed locally
 
 ---
 
@@ -163,53 +122,6 @@ kubectl -n <namespace> create secret generic hf-token \
 ```
 
 This keeps credentials outside Git and avoids hardcoding secrets in committed chart values.
-
----
-
-## What This README Covers
-
-Use this blueprint README for:
-
-- understanding the ALB-based solution shape
-- understanding the Terraform/Helm split
-- understanding where ALB fits in the request path
-- understanding the intended deployment sequence
-
-Use `helm/vllm/README.md` for:
-
-- chart installation commands
-- values configuration
-- runtime parameters
-- resource settings
-- module-specific overrides
-
----
-
-## Position in This Repository
-
-This blueprint is one of the current AWS EKS reference options in the repository.
-
-It should be treated as a **parallel public exposure pattern** alongside the NLB blueprint.
-
-In other words:
-
-- `aws-eks-vllm-alb` = ingress-oriented ALB option
-- `aws-eks-vllm-nlb` = service-oriented NLB option
-
----
-
-## Current Boundary
-
-This blueprint is currently intended as a practical reference deployment pattern, not a complete production platform.
-
-Areas that may evolve later include:
-
-- tighter module reuse across blueprints
-- clearer environment separation
-- observability add-ons
-- autoscaling refinement
-- security hardening
-- private deployment variants
 
 ---
 
