@@ -1,0 +1,44 @@
+# Example single-node GPU Slurm configuration.
+#
+# This is a reference file for the GPU-enabled iteration.
+# Do not copy directly without adjusting hostname, CPU count, memory, and GPU count.
+
+ClusterName=ai-infra-slurm-gpu-lab
+SlurmctldHost=slurm-gpu-01
+
+SlurmUser=slurm
+StateSaveLocation=/var/spool/slurmctld
+SlurmdSpoolDir=/var/spool/slurmd
+
+AuthType=auth/munge
+CryptoType=crypto/munge
+
+ProctrackType=proctrack/linuxproc
+TaskPlugin=task/none
+
+SchedulerType=sched/backfill
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core_Memory
+
+GresTypes=gpu
+
+SlurmctldPort=6817
+SlurmdPort=6818
+
+InactiveLimit=0
+KillWait=30
+MinJobAge=300
+SlurmctldTimeout=120
+SlurmdTimeout=300
+Waittime=0
+
+ReturnToService=2
+
+SlurmctldLogFile=/var/log/slurm/slurmctld.log
+SlurmdLogFile=/var/log/slurm/slurmd.log
+
+# Adjust CPUs, RealMemory, and Gres based on the actual machine.
+NodeName=slurm-gpu-01 CPUs=16 RealMemory=64000 Gres=gpu:1 State=UNKNOWN
+
+PartitionName=debug Nodes=slurm-gpu-01 Default=YES MaxTime=01:00:00 State=UP
+PartitionName=gpu Nodes=slurm-gpu-01 Default=NO MaxTime=04:00:00 State=UP

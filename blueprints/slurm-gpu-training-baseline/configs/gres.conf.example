@@ -1,0 +1,15 @@
+# Example Slurm GRES configuration for GPU nodes.
+#
+# Copy to:
+#   /etc/slurm/gres.conf
+#
+# Adjust NodeName and device files based on the actual GPU node.
+
+# Single-GPU node example:
+NodeName=slurm-gpu-01 Name=gpu File=/dev/nvidia0
+
+# Four-GPU node example:
+# NodeName=slurm-gpu-01 Name=gpu File=/dev/nvidia0
+# NodeName=slurm-gpu-01 Name=gpu File=/dev/nvidia1
+# NodeName=slurm-gpu-01 Name=gpu File=/dev/nvidia2
+# NodeName=slurm-gpu-01 Name=gpu File=/dev/nvidia3
