@@ -1,7 +1,41 @@
 # terraform
-*.tfstate
-*.tfstate.*
-.terraform/
+# Terraform local state and cache
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform.tfvars
+**/*.auto.tfvars
+**/crash.log
+**/crash.*.log
+
+# Terraform plans
+**/*.tfplan
+**/plan.out
+
+# Local SSH/private keys
+*.pem
+*.key
+id_rsa
+id_ed25519
+id_rsa.pub
+id_ed25519.pub
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
 
 # kube
 kubeconfig
@@ -9,5 +43,3 @@ kubeconfig
 # mac
 .DS_Store
 
-# env
-.env
