@@ -1,0 +1,44 @@
+# Copy to terraform.tfvars and edit:
+# cp terraform.tfvars.example terraform.tfvars
+
+region = "us-east-2"
+name   = "slurm-gpu-lab"
+az     = "us-east-2a"
+
+# Existing EC2 key pair name.
+ssh_key_name = "your-ec2-key-pair-name"
+
+# Strongly recommended: replace with your public IP CIDR.
+# Example:
+# allowed_ssh_cidr = "1.2.3.4/32"
+allowed_ssh_cidr = "1.2.3.4/32"
+
+controller_private_ip = "10.30.101.10"
+worker_private_ip     = "10.30.101.20"
+
+# Latest DLAMI via AWS public SSM parameter.
+# PyTorch 2.7 / Ubuntu 22.04 / x86_64 / OSS Nvidia Driver.
+dlami_ssm_parameter = "/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id"
+
+controller_instance_type = "t3.small"
+
+# g5.xlarge: 1 x A10G 24GB. Good enough for Slurm + GRES + NCCL/DDP smoke tests.
+# g4dn.xlarge may be cheaper, but older T4 16GB.
+worker_instance_type = "g5.xlarge"
+
+worker_use_spot       = true
+worker_spot_max_price = ""
+
+controller_root_gib = 60
+worker_root_gib     = 150
+shared_gib          = 100
+
+# Match g5.xlarge defaults.
+worker_cpus           = 4
+worker_real_memory_mb = 14000
+worker_gpu_count      = 1
+
+tags = {
+  Project = "ai-infra-blueprints"
+  Stack   = "slurm-gpu-training-baseline"
+}
